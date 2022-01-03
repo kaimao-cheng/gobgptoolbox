@@ -10,7 +10,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
-	api "github.com/osrg/gobgp/api"
+	api "github.com/osrg/gobgp/v3/api"
 	"github.com/osrg/gobgp/pkg/packet/bgp"
 	"github.com/sbezverk/gobmp/pkg/prefixsid"
 	"github.com/sbezverk/gobmp/pkg/srv6"
@@ -24,11 +24,11 @@ func UnmarshalRD(rd *any.Any) (bgp.RouteDistinguisherInterface, error) {
 	}
 
 	switch v := rdValue.Message.(type) {
-	case *api.RouteDistinguisherTwoOctetAS:
+	case *api.RouteDistinguisherTwoOctetASN:
 		return bgp.NewRouteDistinguisherTwoOctetAS(uint16(v.Admin), v.Assigned), nil
 	case *api.RouteDistinguisherIPAddress:
 		return bgp.NewRouteDistinguisherIPAddressAS(v.Admin, uint16(v.Assigned)), nil
-	case *api.RouteDistinguisherFourOctetAS:
+	case *api.RouteDistinguisherFourOctetASN:
 		return bgp.NewRouteDistinguisherFourOctetAS(v.Admin, uint16(v.Assigned)), nil
 	default:
 		return nil, fmt.Errorf("Unknown route distinguisher type: %+v", v)
@@ -45,11 +45,11 @@ func UnmarshalRT(rts []*any.Any) ([]bgp.ExtendedCommunityInterface, error) {
 		}
 		switch v := rtValue.Message.(type) {
 		case *api.TwoOctetAsSpecificExtended:
-			repl = append(repl, bgp.NewTwoOctetAsSpecificExtended(bgp.ExtendedCommunityAttrSubType(v.SubType), uint16(v.As), v.LocalAdmin, v.IsTransitive))
+			repl = append(repl, bgp.NewTwoOctetAsSpecificExtended(bgp.ExtendedCommunityAttrSubType(v.SubType), uint16(v.Asn), v.LocalAdmin, v.IsTransitive))
 		case *api.IPv4AddressSpecificExtended:
 			repl = append(repl, bgp.NewIPv4AddressSpecificExtended(bgp.ExtendedCommunityAttrSubType(v.SubType), v.Address, uint16(v.LocalAdmin), v.IsTransitive))
 		case *api.FourOctetAsSpecificExtended:
-			repl = append(repl, bgp.NewFourOctetAsSpecificExtended(bgp.ExtendedCommunityAttrSubType(v.SubType), v.As, uint16(v.LocalAdmin), v.IsTransitive))
+			repl = append(repl, bgp.NewFourOctetAsSpecificExtended(bgp.ExtendedCommunityAttrSubType(v.SubType), v.Asn, uint16(v.LocalAdmin), v.IsTransitive))
 		default:
 			return nil, fmt.Errorf("Unknown route target type: %+v", v)
 		}
@@ -63,7 +63,7 @@ func MarshalRD(rd bgp.RouteDistinguisherInterface) *any.Any {
 	var r proto.Message
 	switch v := rd.(type) {
 	case *bgp.RouteDistinguisherTwoOctetAS:
-		r = &api.RouteDistinguisherTwoOctetAS{
+		r = &api.RouteDistinguisherTwoOctetASN{
 			Admin:    uint32(v.Admin),
 			Assigned: v.Assigned,
 		}
@@ -73,7 +73,7 @@ func MarshalRD(rd bgp.RouteDistinguisherInterface) *any.Any {
 			Assigned: uint32(v.Assigned),
 		}
 	case *bgp.RouteDistinguisherFourOctetAS:
-		r = &api.RouteDistinguisherFourOctetAS{
+		r = &api.RouteDistinguisherFourOctetASN{
 			Admin:    v.Admin,
 			Assigned: uint32(v.Assigned),
 		}
@@ -92,7 +92,7 @@ func MarshalRT(rt bgp.ExtendedCommunityInterface) *any.Any {
 		r = &api.TwoOctetAsSpecificExtended{
 			IsTransitive: true,
 			SubType:      uint32(bgp.EC_SUBTYPE_ROUTE_TARGET),
-			As:           uint32(v.AS),
+			Asn:          uint32(v.AS),
 			LocalAdmin:   uint32(v.LocalAdmin),
 		}
 	case *bgp.IPv4AddressSpecificExtended:
@@ -106,7 +106,7 @@ func MarshalRT(rt bgp.ExtendedCommunityInterface) *any.Any {
 		r = &api.FourOctetAsSpecificExtended{
 			IsTransitive: true,
 			SubType:      uint32(bgp.EC_SUBTYPE_ROUTE_TARGET),
-			As:           uint32(v.AS),
+			Asn:          uint32(v.AS),
 			LocalAdmin:   uint32(v.LocalAdmin),
 		}
 
